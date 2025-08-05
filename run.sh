@@ -2,6 +2,12 @@
 
 set -e  # Exit immediately if a command fails
 
+# Add these lines to ensure environment is set for Jenkins
+export MAXIM_PATH=/home/admin1/MaximSDK
+export PATH=$MAXIM_PATH/Tools/OpenOCD/bin:$PATH
+export PATH=$MAXIM_PATH/Tools/GNUTools/bin:$PATH
+# Add any other tool paths if needed
+
 echo "Running make clean..."
 make clean
 
@@ -17,10 +23,8 @@ else
     echo "Board not detected at /dev/ttyUSB0, skipping flashing."
 fi
 
-# Serial log at 115200
 echo ""
 echo "Serial device found at /dev/ttyUSB0"
 echo "Launching serial terminal at 115200 baud..."
 
-# Use cat for non-interactive terminal logging (safe for Jenkins)
 cat /dev/ttyUSB0 | tee serial_output.log
