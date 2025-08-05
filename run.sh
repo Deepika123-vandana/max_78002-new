@@ -23,8 +23,10 @@ else
     echo "Board not detected at /dev/ttyUSB0, skipping flashing."
 fi
 
+
 echo ""
 echo "Serial device found at /dev/ttyUSB0"
 echo "Launching serial terminal at 115200 baud..."
 
-cat /dev/ttyUSB0 | tee serial_output.log
+# Record serial output for 10 seconds only
+timeout 10s cat /dev/ttyUSB0 | tee serial_output.log
