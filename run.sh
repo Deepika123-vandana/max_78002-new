@@ -1,32 +1,26 @@
 #!/bin/bash
 
-# Step 1: Build
-echo "Cleaning and building..."
+set -e  # Exit immediately if a command fails
+
+echo "Running make clean..."
 make clean
+
+echo "Building project..."
 make
 
-# Step 2: Check for Maxim Integrated board and flash
-if lsusb | grep -q "Maxim Integrated"; then
-    echo "Board detected, flashing..."
+# Check if serial device exists
+if [ -e /dev/ttyUSB0 ]; then
+    echo "Board connected at /dev/ttyUSB0"
+    echo "Flashing firmware..."
     make flash.openocd
 else
-    echo "Board not detected, skipping flashing."
+    echo "Board not detected at /dev/ttyUSB0, skipping flashing."
 fi
 
-# Step 3: Check for /dev/ttyUSB0
-PORT="/dev/ttyUSB0"
-if [ -e "$PORT" ]; then
-    echo "Serial device found at $PORT"
-    echo "Launching serial terminal at 115200 baud..."
-    
-    # Install minicom if not already present
-    if ! command -v minicom &> /dev/null; then
-        echo "minicom not found, installing..."
-        sudo apt update && sudo apt install -y minicom
-    fi
+# Serial log at 115200
+echo ""
+echo "Serial device found at /dev/ttyUSB0"
+echo "Launching serial terminal at 115200 baud..."
 
-    # Launch minicom
-    sudo minicom -D $PORT -b 115200
-else
-    echo "Serial port $PORT not found. CLI not launched."
-fi
+# Use cat for non-interactive terminal logging (safe for Jenkins)
+cat /dev/ttyUSB0 | tee serial_output.log
