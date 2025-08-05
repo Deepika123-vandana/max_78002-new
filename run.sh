@@ -2,30 +2,45 @@
 
 set -e  # Exit immediately if a command fails
 
+# Set environment paths for Jenkins
 export MAXIM_PATH=/home/admin1/MaximSDK
 export PATH=$MAXIM_PATH/Tools/OpenOCD/bin:$PATH
 export PATH=$MAXIM_PATH/Tools/GNUTools/bin:$PATH
 
-echo "========== CLEANING BUILD =========="
+echo "=== Cleaning project ==="
 make clean
 
-echo "========== BUILDING PROJECT =========="
+echo "=== Building project ==="
 make
 
+# Flash if board is connected
 if [ -e /dev/ttyUSB0 ]; then
-    echo "========== BOARD DETECTED =========="
-    echo "Flashing firmware to board..."
+    echo "=== Board connected at /dev/ttyUSB0 ==="
+    echo "=== Flashing firmware ==="
     make flash.openocd
 else
-    echo "⚠️ Board not detected at /dev/ttyUSB0. Skipping flashing."
-    exit 1
+    echo "=== Board not detected at /dev/ttyUSB0, skipping flashing ==="
 fi
 
-echo "========== READING SERIAL OUTPUT =========="
-# Timestamped log file
-LOG_FILE="serial_output_$(date +%Y%m%d_%H%M%S).log"
+# Serial logging
+LOG_FILE="serial_output.log"
+echo "=== Starting serial log capture ==="
 
-# Save and print serial output for 10 seconds
-timeout 10s cat /dev/ttyUSB0 | tee "$LOG_FILE"
+# Using background process to read from serial
+# Flush previous content
+> $LOG_FILE
 
-echo "✅ Serial output saved to $LOG_FILE"
+# Background capture from serial
+timeout 15s cat /dev/ttyUSB0 | tee $LOG_FILE &
+CAPTURE_PID=$!
+
+# Optional delay for board to boot and print
+sleep 2
+
+# Wait for capture to finish
+wait $CAPTURE_PID
+
+echo "=== Serial log captured ==="
+echo "=== Output Start ==="
+cat $LOG_FILE
+echo "=== Output End ==="
