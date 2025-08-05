@@ -40,7 +40,6 @@ pipeline {
                 env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                 env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                 env.JOB_NAME_ONLY = env.JOB_NAME.tokenize('/')[1]
-                env.RUN_LOG_CONTENT = sh(script: "tail -n 100 '${env.RUN_LOG}' || echo 'Run output not found.'", returnStdout: true).trim()
             }
         }
 
