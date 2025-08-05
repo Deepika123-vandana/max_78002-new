@@ -39,7 +39,7 @@ pipeline {
             script {
                 env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                 env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
-                env.JOB_NAME_ONLY = env.JOB_NAME.tokenize('/')[1]
+                env.JOB_NAME_ONLY = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
             }
         }
 
