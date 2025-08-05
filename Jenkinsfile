@@ -32,6 +32,18 @@ pipeline {
                 sh './run.sh | tee ${RUN_LOG}'
             }
         }
+
+        stage('Display Serial Output') {
+            steps {
+                script {
+                    echo "====== Serial Output ======"
+                    sh 'cat serial_output.log || echo "serial_output.log not found."'
+
+                    // Load log content into environment for email
+                    env.RUN_LOG_CONTENT = sh(script: 'cat serial_output.log || echo "No serial output captured."', returnStdout: true).trim()
+                }
+            }
+        }
     }
 
     post {
