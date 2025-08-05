@@ -2,32 +2,30 @@
 
 set -e  # Exit immediately if a command fails
 
-# Add these lines to ensure environment is set for Jenkins
 export MAXIM_PATH=/home/admin1/MaximSDK
 export PATH=$MAXIM_PATH/Tools/OpenOCD/bin:$PATH
 export PATH=$MAXIM_PATH/Tools/GNUTools/bin:$PATH
-# Add any other tool paths if needed
 
-echo "Running make clean..."
+echo "========== CLEANING BUILD =========="
 make clean
 
-echo "Building project..."
+echo "========== BUILDING PROJECT =========="
 make
 
-# Check if serial device exists
 if [ -e /dev/ttyUSB0 ]; then
-    echo "Board connected at /dev/ttyUSB0"
-    echo "Flashing firmware..."
+    echo "========== BOARD DETECTED =========="
+    echo "Flashing firmware to board..."
     make flash.openocd
 else
-    echo "Board not detected at /dev/ttyUSB0, skipping flashing."
+    echo "⚠️ Board not detected at /dev/ttyUSB0. Skipping flashing."
+    exit 1
 fi
 
+echo "========== READING SERIAL OUTPUT =========="
+# Timestamped log file
+LOG_FILE="serial_output_$(date +%Y%m%d_%H%M%S).log"
 
-echo ""
-echo "Serial device found at /dev/ttyUSB0"
-echo "Launching serial terminal at 115200 baud..."
+# Save and print serial output for 10 seconds
+timeout 10s cat /dev/ttyUSB0 | tee "$LOG_FILE"
 
-# Record serial output for 10 seconds only
-timeout 10s cat /dev/ttyUSB0 | tee serial_output.log
-
+echo "✅ Serial output saved to $LOG_FILE"
