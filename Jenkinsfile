@@ -24,7 +24,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Boot') {
             steps {
                 echo 'Running tests and capturing serial output...'
                 sh 'mkdir -p ${BUILD_DIR}'
