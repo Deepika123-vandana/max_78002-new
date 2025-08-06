@@ -58,7 +58,7 @@ pipeline {
 
         success {
             emailext(
-                subject: "✅ Jenkins Build Success - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
+                subject: "Jenkins Build Success - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
                 body: """
                     <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
                         <h2 style="color: green;">Build Status: SUCCESS</h2>
@@ -89,7 +89,7 @@ ${env.RUN_LOG_CONTENT}
 
         failure {
             emailext(
-                subject: "❌ Jenkins Build Failure - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
+                subject: "Jenkins Build Failure - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
                 body: """
                     <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
                         <h2 style="color: red;">Build Status: FAILURE</h2>
