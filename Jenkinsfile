@@ -29,9 +29,11 @@ pipeline {
                 echo 'Running tests and capturing serial output...'
                 sh 'mkdir -p ${BUILD_DIR}'
                 sh 'chmod +x run.sh'
-                sh './run.sh | tee ${RUN_LOG}'
+                sh './run.sh'  // <-- key change: no piping to tee
+                sh 'cp serial_output.log ${RUN_LOG}'
             }
         }
+
 
         stage('Display Serial Output') {
             steps {
