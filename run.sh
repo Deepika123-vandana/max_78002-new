@@ -49,8 +49,8 @@ echo "=== Output End ==="
 
 # Check for known failure pattern
 if grep -q "FAILED" serial_output.log; then
-    echo "❌ Error detected in serial output!"
+    echo "Error detected in serial output!"
     exit 1
 else
-    echo "✅ No errors found in serial output."
+    echo "No errors found in serial output."
 fi
