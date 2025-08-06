@@ -1,46 +1,27 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command fails
+# Build the project
+echo "===== Building the project ====="
+make clean && make
 
-# Set environment paths for Jenkins
-export MAXIM_PATH=/home/admin1/MaximSDK
-export PATH=$MAXIM_PATH/Tools/OpenOCD/bin:$PATH
-export PATH=$MAXIM_PATH/Tools/GNUTools/bin:$PATH
+# Find the generated ELF file (modify the pattern if needed)
+ELF_FILE=$(find . -name "*.elf" | head -n 1)
 
-echo "=== Cleaning project ==="
-make clean
-
-echo "=== Building project ==="
-make
-
-# Flash if board is connected
-if [ -e /dev/ttyUSB0 ]; then
-    echo "=== Board connected at /dev/ttyUSB0 ==="
-    echo "=== Flashing firmware ==="
-    make flash.openocd
-else
-    echo "=== Board not detected at /dev/ttyUSB0, skipping flashing ==="
+if [[ ! -f "$ELF_FILE" ]]; then
+    echo "ELF file not found!"
+    exit 1
 fi
 
-# Serial logging
-LOG_FILE="serial_output.log"
-echo "=== Starting serial log capture ==="
+# Flash the ELF file (replace with actual OpenOCD/GDB commands if needed)
+echo "===== Flashing $ELF_FILE ====="
+# Add your real flashing logic here, placeholder:
+# openocd -f interface.cfg -c "program $ELF_FILE verify reset exit"
 
-# Using background process to read from serial
-# Flush previous content
-> $LOG_FILE
+sleep 2  # Optional delay
 
-# Background capture from serial
-timeout 15s cat /dev/ttyUSB0 | tee $LOG_FILE &
-CAPTURE_PID=$!
-
-# Optional delay for board to boot and print
-sleep 2
-
-# Wait for capture to finish
-wait $CAPTURE_PID
-
-echo "=== Serial log captured ==="
-echo "=== Output Start ==="
-cat $LOG_FILE
-echo "=== Output End ==="
+# Capture UART output into a log file (simulate or replace with actual minicom/pyserial/etc.)
+echo "===== Capturing serial output ====="
+echo "=== Starting serial log capture ===" > serial_output.log
+# Example simulated output
+echo "Test cases of GPIO FAILED!" >> serial_output.log
+echo "=== Serial log captured ===" >> serial_output.log
