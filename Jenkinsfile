@@ -1,3 +1,14 @@
+pipeline {
+    agent any
+
+    environment {
+        MAXIM_PATH = "/home/admin1/MaximSDK"
+        PATH = "${env.PATH}:${MAXIM_PATH}/Tools/OpenOCD/bin"
+        BUILD_DIR = "${WORKSPACE}/build"
+        RUN_LOG = "${BUILD_DIR}/run_output.log"
+        TEAM_LEAD_EMAIL = "sriram.ungatla@vconnectech.in,deepika.vandana@vconnectech.in"
+    }
+
     stages {
         stage('Environment Setup') {
             steps {
@@ -25,11 +36,9 @@
 
         stage('Sanity Test') {
             steps {
-                echo 'Running basic sanity test...'
-                // Placeholder for real tests
-                sh '''
-                    echo "Sanity check: PASS" >> ${RUN_LOG}
-                '''
+                echo 'Running Sanity Tests...'
+                // You can add actual test validation here later
+                echo 'Sanity test placeholder: No tests defined yet.'
             }
         }
 
@@ -40,12 +49,12 @@
                     def output = readFile('serial_output.log').trim()
                     echo output
 
+                    // Save serial log content to env variable for email
                     env.RUN_LOG_CONTENT = output
                 }
             }
         }
     }
-
 
     post {
         always {
