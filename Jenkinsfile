@@ -17,16 +17,17 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Clean & Build') {
             steps {
-                echo 'Running make...'
+                echo 'Cleaning and building...'
+                sh 'make clean'
                 sh 'make'
             }
         }
 
-        stage('Boot') {
+        stage('Boot and Flash') {
             steps {
-                echo 'Running tests and capturing serial output...'
+                echo 'Flashing board and capturing serial output...'
                 sh 'mkdir -p ${BUILD_DIR}'
                 sh 'chmod +x run.sh'
                 sh './run.sh'
@@ -36,9 +37,15 @@ pipeline {
 
         stage('Sanity Test') {
             steps {
-                echo 'Running Sanity Tests...'
-                // You can add actual test validation here later
-                echo 'Sanity test placeholder: No tests defined yet.'
+                echo 'Running Sanity Test on serial log...'
+                script {
+                    def serialLog = readFile("${RUN_LOG}")
+                    if (serialLog.contains("Hello") || serialLog.contains("Boot") || serialLog.contains("Welcome")) {
+                        echo "Sanity Test Passed: Boot log detected"
+                    } else {
+                        error("Sanity Test Failed: Expected boot message not found.")
+                    }
+                }
             }
         }
 
@@ -46,10 +53,10 @@ pipeline {
             steps {
                 script {
                     echo "====== Serial Output ======"
-                    def output = readFile('serial_output.log').trim()
+                    def output = readFile("${RUN_LOG}").trim()
                     echo output
 
-                    // Save serial log content to env variable for email
+                    // Save for email
                     env.RUN_LOG_CONTENT = output
                 }
             }
@@ -63,12 +70,8 @@ pipeline {
                 env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                 env.JOB_NAME_ONLY = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
 
-                def serialLogPath = 'serial_output.log'
-                if (fileExists(serialLogPath)) {
-                    env.RUN_LOG_CONTENT = readFile(serialLogPath).trim()
-                } else {
-                    env.RUN_LOG_CONTENT = 'Serial output log not found.'
-                }
+                def serialLogPath = "${RUN_LOG}"
+                env.RUN_LOG_CONTENT = fileExists(serialLogPath) ? readFile(serialLogPath).trim() : 'Serial output log not found.'
             }
         }
 
@@ -85,14 +88,11 @@ pipeline {
                         <p><strong>Commit Message:</strong> ${env.GIT_COMMIT_MSG}</p>
                         <p><strong>Email Sent To:</strong> ${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}</p>
                         <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console" target="_blank">${env.BUILD_URL}console</a></p>
-
                         <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;">
-
                         <h3>Test Output:</h3>
                         <pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; font-family: Consolas, monospace; font-size: 14px; overflow-x: auto;">
 ${env.RUN_LOG_CONTENT}
                         </pre>
-
                         <p style="margin-top: 30px;">Regards,<br>Jenkins</p>
                     </div>
                 """,
@@ -116,14 +116,11 @@ ${env.RUN_LOG_CONTENT}
                         <p><strong>Commit Message:</strong> ${env.GIT_COMMIT_MSG}</p>
                         <p><strong>Email Sent To:</strong> ${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}</p>
                         <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console" target="_blank">${env.BUILD_URL}console</a></p>
-
                         <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;">
-
                         <h3>Test Output:</h3>
                         <pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; font-family: Consolas, monospace; font-size: 14px; overflow-x: auto;">
 ${env.RUN_LOG_CONTENT}
                         </pre>
-
                         <p style="margin-top: 30px;">Regards,<br>Jenkins</p>
                     </div>
                 """,
