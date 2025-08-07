@@ -33,6 +33,10 @@ pipeline {
                 sh 'cp serial_output.log ${RUN_LOG}'
             }
         }
+        stage('sanity check') {
+            steps {
+            }
+        }
 
         stage('Display Serial Output') {
             steps {
