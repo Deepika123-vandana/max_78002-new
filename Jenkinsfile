@@ -15,9 +15,7 @@ pipeline {
                 script {
                     def buildStatus = 'SUCCESS'
                     try {
-                        stage('Checkout Source') {
-                            checkout scm
-                        }
+                       
 
                         stage('Environment Setup') {
                             sh 'bash -c "source ./env_setup.sh && env"'
