@@ -10,22 +10,14 @@ pipeline {
     }
 
     stages {
-        stage('Checkout SCM') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Environment Setup') {
             steps {
-                echo 'Setting up environment...'
                 sh 'bash -c "source ./env_setup.sh && env"'
             }
         }
 
         stage('Clean & Build') {
             steps {
-                echo 'Cleaning and building...'
                 sh 'make clean'
                 sh 'make'
             }
@@ -34,58 +26,43 @@ pipeline {
         stage('Boot and Flash') {
             steps {
                 script {
-                    try {
-                        echo 'Flashing board and capturing serial output...'
-                        sh 'mkdir -p ${BUILD_DIR}'
-                        sh 'chmod +x run.sh'
-                        sh './run.sh'
-                        sh 'cp serial_output.log ${RUN_LOG} || echo "Serial output log not found." > ${RUN_LOG}'
-                        env.BOOT_SUCCESS = "true"
-                    } catch (err) {
-                        env.BOOT_SUCCESS = "false"
-                        error("Boot and Flash failed: ${err}")
-                    }
+                    sh "mkdir -p ${BUILD_DIR}"
+                    sh "chmod +x run.sh"
+                    sh "./run.sh"
+                    sh "cp serial_output.log ${RUN_LOG} || echo 'Serial output log not found.' > ${RUN_LOG}"
                 }
             }
         }
 
         stage('Sanity Test') {
             when {
-                expression { env.BOOT_SUCCESS == "true" }
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
             }
             steps {
-                echo '=== Sanity Test Stage (Placeholder) ==='
-                echo 'No tests implemented yet.'
+                echo 'Sanity Test stage (currently empty)'
             }
         }
 
-        stage('Display Serial Output') {
-            when {
-                expression { env.BOOT_SUCCESS == "true" }
-            }
-            steps {
-                script {
-                    echo "====== Serial Output ======"
-                    def output = readFile("${RUN_LOG}").trim()
-                    echo output
-                    env.RUN_LOG_CONTENT = output
-                }
-            }
-        }
-
-        stage('Send Email Notification') {
+        stage('Display Serial Output & Send Email') {
             steps {
                 script {
                     def buildStatus = currentBuild.result ?: 'SUCCESS'
+
+                    // Read serial log if exists
+                    def output = fileExists(RUN_LOG) ? readFile(RUN_LOG).trim() : 'Serial output log not found.'
+                    echo "====== Serial Output ======"
+                    echo output
+
+                    // Git commit info
                     env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                     env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     env.JOB_NAME_ONLY = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
-                    def serialLogPath = "${RUN_LOG}"
-                    env.RUN_LOG_CONTENT = fileExists(serialLogPath) ? readFile(serialLogPath).trim() : 'Serial output log not found.'
 
+                    // Email colors & subject
                     def subjectColor = buildStatus == 'FAILURE' ? 'red' : 'green'
                     def subjectText = buildStatus == 'FAILURE' ? 'Build Failure' : 'Build Success'
 
+                    // Send email
                     emailext(
                         subject: "Jenkins ${subjectText} - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
                         body: """
@@ -99,7 +76,7 @@ pipeline {
                             <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
                             <hr>
                             <h3>Test Output:</h3>
-                            <pre>${env.RUN_LOG_CONTENT}</pre>
+                            <pre>${output}</pre>
                             <br>
                             Regards,<br>
                             Jenkins
