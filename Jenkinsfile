@@ -36,7 +36,6 @@ pipeline {
                         ./run.sh
                     """
                 }
-                // Copy serial output log or write a fallback message
                 sh """
                     if [ -f serial_output.log ]; then
                         cp serial_output.log ${RUN_LOG}
