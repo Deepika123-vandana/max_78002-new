@@ -15,7 +15,7 @@ pipeline {
                 script {
                     def buildStatus = 'SUCCESS'
                     try {
-                        
+
                         stage('Environment Setup') {
                             sh 'bash -c "source ./env_setup.sh && env"'
                         }
@@ -33,13 +33,8 @@ pipeline {
                         }
 
                         stage('Sanity Test') {
-                            when {
-                                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-                            }
-                            steps {
-                                echo '=== Sanity Test (Placeholder) ==='
-                                echo 'No tests implemented yet.'
-                            }
+                            echo '=== Sanity Test (Placeholder) ==='
+                            echo 'No tests implemented yet.'
                         }
 
                         stage('Display Serial Output') {
@@ -52,6 +47,8 @@ pipeline {
                     } catch (err) {
                         buildStatus = 'FAILURE'
                         echo "Pipeline failed: ${err}"
+                        currentBuild.result = 'FAILURE'   // Mark build as failed
+                        throw err                          // Rethrow so Jenkins fails the run
                     } finally {
                         env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                         env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
