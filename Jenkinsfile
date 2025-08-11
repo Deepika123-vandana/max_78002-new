@@ -30,7 +30,7 @@ pipeline {
                             echo 'Flashing board and capturing serial output...'
                             sh 'mkdir -p ${BUILD_DIR}'
                             sh 'chmod +x run.sh'
-                            sh './run.sh || true'
+                            sh './run.sh'
                             sh 'cp serial_output.log ${RUN_LOG} || echo "Serial output log not found." > ${RUN_LOG}'
                         }
 
