@@ -56,7 +56,7 @@ pipeline {
             }
         }
 
-        stage('Display Serial Output & Email') {
+        stage('Display Serial Output and email') {
             steps {
                 script {
                     def runLogFile = "${RUN_LOG}"
