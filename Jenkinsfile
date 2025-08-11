@@ -9,63 +9,84 @@ pipeline {
         TEAM_LEAD_EMAIL = "sriram.ungatla@vconnectech.in,deepika.vandana@vconnectech.in"
     }
 
-    
-
     stages {
-        stage('Environment Setup') {
+        stage('Pipeline Execution') {
             steps {
-                sh 'echo Setting up environment...'
-            }
-        }
+                script {
+                    def buildStatus = 'SUCCESS'
+                    try {
+                        
+                        stage('Environment Setup') {
+                            sh 'bash -c "source ./env_setup.sh && env"'
+                        }
 
-        stage('Clean & Build') {
-            steps {
-                sh '''
-                    echo Cleaning build directory...
-                    rm -rf ${BUILD_DIR}
-                    mkdir -p ${BUILD_DIR}
-                    echo Building project...
-                    # your actual build commands go here
-                '''
-            }
-        }
+                        stage('Clean & Build') {
+                            sh 'make clean'
+                            sh 'make'
+                        }
 
-        stage('Boot and Flash') {
-            steps {
-                sh '''
-                    set -e
-                    mkdir -p ${BUILD_DIR}
-                    chmod +x run.sh
-                    ./run.sh | tee ${RUN_LOG}
-                '''
-            }
-        }
+                        stage('Boot and Flash') {
+                            sh 'mkdir -p ${BUILD_DIR}'
+                            sh 'chmod +x run.sh'
+                            sh './run.sh'
+                            sh 'cp serial_output.log ${RUN_LOG} || echo "Serial output log not found." > ${RUN_LOG}'
+                        }
 
-        stage('Sanity Test') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
-            steps {
-                echo "=== Sanity Test Stage ==="
-                echo "No tests implemented yet."
-            }
-        }
-    }
+                        stage('Sanity Test') {
+                            when {
+                                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+                            }
+                            steps {
+                                echo '=== Sanity Test (Placeholder) ==='
+                                echo 'No tests implemented yet.'
+                            }
+                        }
 
-    post {
-        success {
-            emailext (
-                subject: "SUCCESS: Job '${JOB_NAME} [${BUILD_NUMBER}]'",
-                body: "Pipeline succeeded.\nCheck console: ${BUILD_URL}",
-                to: "deepika.vandana@vconnectech.in,sriram.ungatla@vconnectech.in"
-            )
-        }
-        failure {
-            emailext (
-                subject: "FAILURE: Job '${JOB_NAME} [${BUILD_NUMBER}]'",
-                body: "Pipeline failed.\nCheck console: ${BUILD_URL}",
-                to: "deepika.vandana@vconnectech.in,sriram.ungatla@vconnectech.in"
-            )
+                        stage('Display Serial Output') {
+                            def output = readFile("${RUN_LOG}").trim()
+                            echo "====== Serial Output ======"
+                            echo output
+                            env.RUN_LOG_CONTENT = output
+                        }
+
+                    } catch (err) {
+                        buildStatus = 'FAILURE'
+                        echo "Pipeline failed: ${err}"
+                    } finally {
+                        env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
+                        env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
+                        env.JOB_NAME_ONLY = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
+                        def serialLogPath = "${RUN_LOG}"
+                        env.RUN_LOG_CONTENT = fileExists(serialLogPath) ? readFile(serialLogPath).trim() : 'Serial output log not found.'
+
+                        def subjectColor = buildStatus == 'FAILURE' ? 'red' : 'green'
+                        def subjectText = buildStatus == 'FAILURE' ? 'Build Failure' : 'Build Success'
+
+                        emailext(
+                            subject: "Jenkins ${subjectText} - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
+                            body: """
+                                <h2 style="color: ${subjectColor};">Build Status: ${buildStatus}</h2>
+                                <p><strong>Job Name:</strong> ${env.JOB_NAME_ONLY}</p>
+                                <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+                                <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
+                                <p><strong>Commit Author:</strong> ${env.COMMIT_AUTHOR}</p>
+                                <p><strong>Commit Message:</strong> ${env.GIT_COMMIT_MSG}</p>
+                                <p><strong>Email Sent To:</strong> ${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}</p>
+                                <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                                <hr>
+                                <h3>Test Output:</h3>
+                                <pre>${env.RUN_LOG_CONTENT}</pre>
+                                <br>
+                                Regards,<br>
+                                Jenkins
+                            """,
+                            mimeType: 'text/html',
+                            to: "${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}",
+                            from: "sriram.ungatla@vconnecttech.in"
+                        )
+                    }
+                }
+            }
         }
     }
 }
