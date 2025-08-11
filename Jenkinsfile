@@ -48,59 +48,50 @@ pipeline {
             }
         }
 
-        stage('Display Serial Output & Email') {
-            steps {
-                script {
-                    // Read captured serial log
-                    def output = fileExists("${RUN_LOG}") ? readFile("${RUN_LOG}").trim() : "Serial output log not found."
-                    echo "====== Serial Output ======"
-                    echo output
-                    env.RUN_LOG_CONTENT = output
+       stage('Display Serial Output & Email') {
+    steps {
+        script {
+            // Read captured serial log
+            def runLogFile = "${RUN_LOG}"
+            def runLogContent = fileExists(runLogFile) ? readFile(runLogFile).trim() : "Serial output log not found."
 
-                    // Detect failing stage from currentBuild.rawBuild
-                    def failedStage = ""
-                    currentBuild.rawBuild.getActions(hudson.model.ErrorAction).each { error ->
-                        def stageName = error.getDisplayName()
-                        if (stageName) { failedStage = stageName }
-                    }
-                    if (!failedStage) {
-                        failedStage = (currentBuild.result == 'FAILURE') ? "Unknown Stage" : "None (Build Passed)"
-                    }
+            echo "====== Serial Output ======"
+            echo runLogContent
 
-                    // Commit info
-                    env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
-                    env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
-                    env.JOB_NAME_ONLY = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
+            // Simplify failed stage detection
+            def failedStage = (currentBuild.result == 'FAILURE') ? "Unknown (Failed)" : "None (Build Passed)"
 
-                    def subjectColor = currentBuild.result == 'FAILURE' ? 'red' : 'green'
-                    def subjectText = currentBuild.result == 'FAILURE' ? 'Build Failure' : 'Build Success'
+            // Commit info
+            def commitAuthor = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
+            def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
+            def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
 
-                    // Send email
-                    emailext(
-                        subject: "Jenkins ${subjectText} - ${env.JOB_NAME_ONLY} #${env.BUILD_NUMBER}",
-                        body: """
-                            <h2 style="color: ${subjectColor};">Build Status: ${currentBuild.result}</h2>
-                            <p><strong>Job Name:</strong> ${env.JOB_NAME_ONLY}</p>
-                            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                            <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
-                            <p><strong>Commit Author:</strong> ${env.COMMIT_AUTHOR}</p>
-                            <p><strong>Commit Message:</strong> ${env.GIT_COMMIT_MSG}</p>
-                            <p><strong>Failed Stage:</strong> ${failedStage}</p>
-                            <p><strong>Email Sent To:</strong> ${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}</p>
-                            <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                            <hr>
-                            <h3>Serial Output:</h3>
-                            <pre>${env.RUN_LOG_CONTENT}</pre>
-                            <br>
-                            Regards,<br>
-                            Jenkins
-                        """,
-                        mimeType: 'text/html',
-                        to: "${env.COMMIT_AUTHOR}, ${TEAM_LEAD_EMAIL}",
-                        from: "sriram.ungatla@vconnecttech.in"
-                    )
-                }
-            }
+            def subjectColor = currentBuild.result == 'FAILURE' ? 'red' : 'green'
+            def subjectText = currentBuild.result == 'FAILURE' ? 'Build Failure' : 'Build Success'
+
+            emailext(
+                subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2 style="color: ${subjectColor};">Build Status: ${currentBuild.result}</h2>
+                    <p><strong>Job Name:</strong> ${jobNameOnly}</p>
+                    <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+                    <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
+                    <p><strong>Commit Author:</strong> ${commitAuthor}</p>
+                    <p><strong>Commit Message:</strong> ${gitCommitMsg}</p>
+                    <p><strong>Failed Stage:</strong> ${failedStage}</p>
+                    <p><strong>Email Sent To:</strong> ${commitAuthor}, ${TEAM_LEAD_EMAIL}</p>
+                    <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                    <hr>
+                    <h3>Serial Output:</h3>
+                    <pre>${runLogContent}</pre>
+                    <br>
+                    Regards,<br>
+                    Jenkins
+                """,
+                mimeType: 'text/html',
+                to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
+                from: "sriram.ungatla@vconnecttech.in"
+            )
         }
     }
 }
