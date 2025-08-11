@@ -84,7 +84,6 @@ pipeline {
                             <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
                             <p><strong>Commit Author:</strong> ${commitAuthor}</p>
                             <p><strong>Commit Message:</strong> ${gitCommitMsg}</p>
-                    //      <p><strong>Failed Stage:</strong> ${failedStage}</p>
                             <p><strong>Email Sent To:</strong> ${commitAuthor}, ${TEAM_LEAD_EMAIL}</p>
                             <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
                             <hr>
