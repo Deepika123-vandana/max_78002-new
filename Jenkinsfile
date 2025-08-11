@@ -56,11 +56,6 @@ pipeline {
             steps {
                 echo '=== Sanity Test Stage (Placeholder) ==='
                 echo 'No tests implemented yet.'
-                // Example future check:
-                // def serialLog = readFile("${RUN_LOG}")
-                // if (!(serialLog.contains("Hello") || serialLog.contains("Boot") || serialLog.contains("Welcome"))) {
-                //     error("Sanity Test Failed: Expected boot message not found.")
-                // }
             }
         }
 
@@ -69,21 +64,15 @@ pipeline {
                 expression { env.BOOT_SUCCESS == "true" }
             }
             steps {
-                echo "====== Serial Output ======"
-                def output = readFile("${RUN_LOG}").trim()
-                echo output
-                env.RUN_LOG_CONTENT = output
+                script {
+                    echo "====== Serial Output ======"
+                    def output = readFile("${RUN_LOG}").trim()
+                    echo output
+                    env.RUN_LOG_CONTENT = output
+                }
             }
         }
-    }
 
-    // Send email without using post
-    // If pipeline fails anywhere, we still send
-    // The `currentBuild.result` will be FAILURE if any stage failed
-    // Runs after all stages
-    // This is done via `finally` in a `script` step at the end
-    // To make it global, use `script` at top level in last stage
-    stages {
         stage('Send Email Notification') {
             steps {
                 script {
