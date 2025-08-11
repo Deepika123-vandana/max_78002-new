@@ -33,12 +33,15 @@ pipeline {
                     sh 'mkdir -p ${BUILD_DIR}'
                     sh 'chmod +x run.sh'
                     sh './run.sh'
-                    sh 'cp serial_output.log ${RUN_LOG} || echo "Serial output log not found." > ${RUN_LOG}'
                 }
+                sh 'cp serial_output.log ${RUN_LOG} || echo "Serial output log not found." > ${RUN_LOG}'
             }
         }
 
         stage('Sanity Test') {
+            when {
+                expression { currentBuild.previousBuild?.resultIsBetterOrEqualTo('SUCCESS') || currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
             steps {
                 echo '=== Sanity Test (Placeholder) ==='
                 echo 'No tests implemented yet.'
