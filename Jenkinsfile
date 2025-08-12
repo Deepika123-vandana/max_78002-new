@@ -100,7 +100,7 @@ pipeline {
                     if (currentBuild.result == 'FAILURE' && branch.endsWith("main")) {
                         echo "Build failed on main branch. Starting revert process..."
         
-                        withCredentials([string(credentialsId: 'github-pat-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'All_projects', variable: 'GITHUB_TOKEN')]) {
                             sh '''
                                 set -e
                                 git config user.name "Deepika123-vandana"
