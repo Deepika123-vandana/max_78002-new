@@ -6,7 +6,7 @@ pipeline {
         PATH = "${env.PATH}:${MAXIM_PATH}/Tools/OpenOCD/bin"
         BUILD_DIR = "${WORKSPACE}/build"
         RUN_LOG = "${BUILD_DIR}/run_output.log"
-        TEAM_LEAD_EMAIL = "sriram.ungatla@vconnectech.in,deepika.vandana@vconnectech.in"
+        TEAM_LEAD_EMAIL = "sriram.ungatla@vconnectech.in, deepika.vandana@vconnectech.in"
     }
 
     stages {
@@ -61,19 +61,19 @@ pipeline {
                 script {
                     def runLogFile = "${RUN_LOG}"
                     def runLogContent = fileExists(runLogFile) ? readFile(runLogFile).trim() : "Serial output log not found."
-
+        
                     echo "====== Serial Output ======"
                     echo runLogContent
-
+        
                     def failedStage = (currentBuild.result == 'FAILURE') ? "Unknown (Failed)" : "None (Build Passed)"
-
+        
                     def commitAuthor = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                     def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
-
+        
                     def subjectColor = currentBuild.result == 'FAILURE' ? 'red' : 'green'
                     def subjectText = currentBuild.result == 'FAILURE' ? 'Build Failure' : 'Build Success'
-
+        
                     emailext(
                         subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
                         body: """
@@ -96,6 +96,47 @@ pipeline {
                         to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
                         from: "sriram.ungatla@vconnecttech.in"
                     )
+        
+                    // Now the revert logic if build failed on main branch
+                    if (currentBuild.result == 'FAILURE' && env.BRANCH_NAME == 'main') {
+                        echo "Build failed on main branch. Starting revert process..."
+        
+                        withCredentials([string(credentialsId: 'github-pat-token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''
+                                set -e
+                                git config user.name "Deepika123-vandana"
+                                git config user.email "deepika.vandana@vconnectech.in"
+        
+                                echo "Last commit:"
+                                git log -1
+        
+                                echo "Checking out main branch..."
+                                git checkout main
+        
+                                echo "Cleaning up possible rebase conflicts..."
+                                rm -rf .git/rebase-merge .git/rebase-apply
+        
+                                echo "Fetching latest main from remote..."
+                                git fetch https://github.com/Deepika123-vandana/max_78002-new.git main
+        
+                                echo "Trying to rebase FETCH_HEAD..."
+                                if ! git rebase FETCH_HEAD; then
+                                    echo "Rebase failed. Aborting..."
+                                    git rebase --abort
+                                    echo "Resetting to FETCH_HEAD..."
+                                    git reset --hard FETCH_HEAD
+                                fi
+        
+                                echo "Reverting last commit..."
+                                git revert --no-edit HEAD
+        
+                                echo "Pushing revert to remote..."
+                                git push https://github.com/Deepika123-vandana/max_78002-new.git main
+                            '''
+                        }
+                    } else {
+                        echo "No revert needed. Build status: ${currentBuild.result}, Branch: ${env.BRANCH_NAME}"
+                    }
                 }
             }
         }
