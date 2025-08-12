@@ -65,8 +65,6 @@ pipeline {
                     echo "====== Serial Output ======"
                     echo runLogContent
         
-                    def failedStage = (currentBuild.result == 'FAILURE') ? "Unknown (Failed)" : "None (Build Passed)"
-        
                     def commitAuthor = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                     def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
@@ -98,7 +96,8 @@ pipeline {
                     )
         
                     // Now the revert logic if build failed on main branch
-                    if (currentBuild.result == 'FAILURE' && env.BRANCH_NAME == 'main') {
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+                    if (currentBuild.result == 'FAILURE' && branch.endsWith("main")) {
                         echo "Build failed on main branch. Starting revert process..."
         
                         withCredentials([string(credentialsId: 'github-pat-token', variable: 'GITHUB_TOKEN')]) {
@@ -107,38 +106,25 @@ pipeline {
                                 git config user.name "Deepika123-vandana"
                                 git config user.email "deepika.vandana@vconnectech.in"
         
-                                echo "Last commit:"
-                                git log -1
-        
-                                echo "Checking out main branch..."
+                                echo "Ensuring we are on latest main..."
+                                git fetch https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
                                 git checkout main
-        
-                                echo "Cleaning up possible rebase conflicts..."
-                                rm -rf .git/rebase-merge .git/rebase-apply
-        
-                                echo "Fetching latest main from remote..."
-                                git fetch https://github.com/Deepika123-vandana/max_78002-new.git main
-        
-                                echo "Trying to rebase FETCH_HEAD..."
-                                if ! git rebase FETCH_HEAD; then
-                                    echo "Rebase failed. Aborting..."
-                                    git rebase --abort
-                                    echo "Resetting to FETCH_HEAD..."
-                                    git reset --hard FETCH_HEAD
-                                fi
+                                git reset --hard FETCH_HEAD
         
                                 echo "Reverting last commit..."
                                 git revert --no-edit HEAD
         
                                 echo "Pushing revert to remote..."
-                                git push https://github.com/Deepika123-vandana/max_78002-new.git main
+                                git push https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
                             '''
                         }
                     } else {
-                        echo "No revert needed. Build status: ${currentBuild.result}, Branch: ${env.BRANCH_NAME}"
+                        echo "No revert needed. Build status: ${currentBuild.result}, Branch: ${branch}"
                     }
                 }
             }
         }
     }
 }
+        
+        
