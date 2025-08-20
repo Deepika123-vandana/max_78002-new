@@ -133,4 +133,3 @@ uint32_t gpio_get(uint8_t port_num, uint8_t pin_num)	// Function to get the stat
 	return (MXC_GPIO_InGet(gpio.port, gpio.mask) >> pin_num);	// Read and return the state of the pin
 
 }
-
