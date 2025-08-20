@@ -115,6 +115,7 @@ void test_gpio(void)
 	else
 	{
 		printf("Test cases of GPIO FAILED!\n");
+		printf("a = %d, b = %d, c = %d",a,b,c );
 	}
 }
 
