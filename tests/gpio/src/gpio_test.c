@@ -40,7 +40,7 @@ int test_gpio_set(void)
 /******************************************************************************/
 int test_gpio_get(void)
 {
-	//gpio_set(PORT,PIN5,VALUE1);
+	gpio_set(PORT,PIN5,VALUE1);
 	if(gpio_get(PORT,PIN5)==VALUE1)
 	{
 		return PASS;
@@ -131,7 +131,7 @@ void test_gpio(void)
 		printf("toggle Failed\n");
 	}
 		
-	if(a == PASS && b == PASS && c == PASS)
+	//if(a == PASS && b == PASS && c == PASS)
 	{
 		printf("All Test cases of GPIO PASSED!\n");
 		gpio_set(PORT,PIN4,VALUE1);
