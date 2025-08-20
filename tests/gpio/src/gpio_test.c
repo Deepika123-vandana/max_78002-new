@@ -111,24 +111,24 @@ void test_gpio(void)
 	
 	if ( a == PASS)
 	{
-		printf("A Passed\n");
+		printf("set Passed\n");
 	}
 	else {
-		printf("A Failed\n");
+		printf("set Failed\n");
 	}
 	if ( b == PASS)
 	{
-		printf("B Passed\n");
+		printf("get Passed\n");
 	}
 	else {
-		printf("B Failed\n");
+		printf("get Failed\n");
 	}
 	if (c == PASS)
 	{
-		printf("C Passed\n");
+		printf("toggle Passed\n");
 	}
 	else {
-		printf("C Failed\n");
+		printf("toggle Failed\n");
 	}
 		
 	if(a == PASS && b == PASS && c == PASS)
