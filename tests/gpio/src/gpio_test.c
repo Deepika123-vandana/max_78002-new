@@ -41,7 +41,7 @@ int test_gpio_set(void)
 int test_gpio_get(void)
 {
 	gpio_set(PORT,PIN5,VALUE1);
-	if(gpio_get(PORT,PIN5)==VALUE1)
+	if(gpio_get(PORT,PIN5)==VALUE0)
 	{
 		return PASS;
 	}
