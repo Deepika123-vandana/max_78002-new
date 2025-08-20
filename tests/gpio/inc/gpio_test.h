@@ -34,7 +34,7 @@
 #include "gpio1.h"
 
 /***** Definitions *****/
-#define PORT 0	//GPIO PORT 2
+#define PORT 2	//GPIO PORT 2
 #define PIN4 4	//GPIO PIN 4 
 #define PIN5 5	//GPIO PIN 5
 #define VALUE0 0
