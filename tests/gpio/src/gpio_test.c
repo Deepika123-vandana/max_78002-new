@@ -27,8 +27,8 @@
 /******************************************************************************/
 int test_gpio_set(void)
 {
-	gpio_set(PORT,PIN4,VALUE0);
-	if(gpio_get(PORT,PIN4)==VALUE0)
+	gpio_set(PORT,PIN5,VALUE1);
+	if(gpio_get(PORT,PIN5)==VALUE1)
 	{
 		return PASS;
 	}
@@ -134,11 +134,12 @@ void test_gpio(void)
 	if(a == PASS && b == PASS && c == PASS)
 	{
 		printf("All Test cases of GPIO PASSED!\n");
+		gpio_set(PORT,PIN4,VALUE1);
+	        gpio_set(PORT,PIN5,VALUE1);
 	}
 	else
 	{
-		printf("Test cases of GPIO FAILED!\n a = %d, b = %d, c = %d",a,b,c);
-		//printf("a = %d, b = %d, c = %d",a,b,c );
+		printf("Test cases of GPIO FAILED!\n");
 	}
 }
 
