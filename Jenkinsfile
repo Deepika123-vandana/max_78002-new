@@ -21,7 +21,7 @@ pipeline {
         stage('Clean & Build') {
             steps {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    sh 'make clean'
+                   // sh 'make clean'
                     sh 'make'
                 }
             }
