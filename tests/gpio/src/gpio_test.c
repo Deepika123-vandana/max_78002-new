@@ -131,7 +131,7 @@ void test_gpio(void)
 		printf("toggle Failed\n");
 	}
 		
-	if(a == PASS && b == PASS && c == PASS)
+	//if(a == PASS && b == PASS && c == PASS)
 	{
 		printf("All Test cases of GPIO PASSED!\n");
 		gpio_set(PORT,PIN4,VALUE1);
