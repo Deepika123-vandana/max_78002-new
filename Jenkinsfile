@@ -71,33 +71,33 @@ pipeline {
             }
         }
 
-        stage('Display Serial Output and email') {
+       stage('Display Serial Output and email') {
             steps {
                 script {
                     def runLogFile = "${RUN_LOG}"
                     def runLogContent = fileExists(runLogFile) ? readFile(runLogFile).trim() : "Serial output log not found."
-
+        
                     echo "====== Serial Output ======"
                     echo runLogContent
-
+        
                     def commitAuthor = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
                     def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
-
+        
                     def subjectColor = currentBuild.result == 'FAILURE' ? 'red' : 'green'
                     def subjectText = currentBuild.result == 'FAILURE' ? 'Build Failure' : 'Build Success'
-
+        
                     emailext(
                         subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
                         body: """
-                            <h2 style=\"color: ${subjectColor};\">Build Status: ${currentBuild.result}</h2>
+                            <h2 style="color: ${subjectColor};">Build Status: ${currentBuild.result}</h2>
                             <p><strong>Job Name:</strong> ${jobNameOnly}</p>
                             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
                             <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
                             <p><strong>Commit Author:</strong> ${commitAuthor}</p>
                             <p><strong>Commit Message:</strong> ${gitCommitMsg}</p>
                             <p><strong>Email Sent To:</strong> ${commitAuthor}, ${TEAM_LEAD_EMAIL}</p>
-                            <p><strong>Console Output:</strong> <a href=\"${env.BUILD_URL}console\">${env.BUILD_URL}console</a></p>
+                            <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
                             <hr>
                             <h3>Serial Output:</h3>
                             <pre>${runLogContent}</pre>
@@ -109,26 +109,26 @@ pipeline {
                         to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
                         from: "sriram.ungatla@vconnecttech.in"
                     )
-
+        
                     // Now the revert logic if build failed on main branch
                     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
                     if (currentBuild.result == 'FAILURE' && branch.endsWith("main")) {
                         echo "Build failed on main branch. Starting revert process..."
-
+        
                         withCredentials([string(credentialsId: 'All_projects', variable: 'GITHUB_TOKEN')]) {
                             sh '''
                                 set -e
                                 git config user.name "Deepika123-vandana"
                                 git config user.email "deepika.vandana@vconnectech.in"
-
+        
                                 echo "Ensuring we are on latest main..."
                                 git fetch https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
                                 git checkout main
                                 git reset --hard FETCH_HEAD
-
+        
                                 echo "Reverting last commit..."
                                 git revert --no-edit HEAD
-
+        
                                 echo "Pushing revert to remote..."
                                 git push https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
                             '''
@@ -137,15 +137,6 @@ pipeline {
                         echo "No revert needed. Build status: ${currentBuild.result}, Branch: ${branch}"
                     }
                 }
-            }
-        }
-
-        post {
-            success {
-                githubNotify context: 'Jenkins CI', status: 'SUCCESS', description: 'Build Passed'
-            }
-            failure {
-                githubNotify context: 'Jenkins CI', status: 'FAILURE', description: 'Build Failed'
             }
         }
     }
