@@ -32,7 +32,7 @@ pipeline {
                     sh """
                         mkdir -p ${BUILD_DIR}
                         chmod +x run.sh
-                        ./run.sh
+                        //./run.sh
                     """
                 }
                 sh """
