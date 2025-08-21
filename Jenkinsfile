@@ -88,27 +88,30 @@ pipeline {
                     def subjectText = currentBuild.result == 'FAILURE' ? 'Build Failure' : 'Build Success'
         
                     emailext(
-                        subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
+                        subject: "Jenkins Build ${buildStatus} - ${env.BRANCH_NAME} #${env.BUILD_NUMBER}",
                         body: """
-                            <h2 style="color: ${subjectColor};">Build Status: ${currentBuild.result}</h2>
-                            <p><strong>Job Name:</strong> ${jobNameOnly}</p>
-                            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                            <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
-                            <p><strong>Commit Author:</strong> ${commitAuthor}</p>
-                            <p><strong>Commit Message:</strong> ${gitCommitMsg}</p>
-                            <p><strong>Email Sent To:</strong> ${commitAuthor}, ${TEAM_LEAD_EMAIL}</p>
-                            <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                            <hr>
-                            <h3>Serial Output:</h3>
-                            <pre>${runLogContent}</pre>
-                            <br>
-                            Regards,<br>
-                            Jenkins
-                        """,
-                        mimeType: 'text/html',
-                        to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
-                        from: "sriram.ungatla@vconnecttech.in"
+                    Build Status: ${buildStatus}
+                    
+                    Job Name: ${env.JOB_NAME}
+                    Build Number: #${env.BUILD_NUMBER}
+                    Branch Name: ${env.BRANCH_NAME}
+                    Commit Author: ${env.GIT_AUTHOR_EMAIL}
+                    Commit Message: ${env.GIT_COMMIT_MESSAGE}
+                    Email Sent To: ${env.EMAIL_RECIPIENTS}
+                    
+                    Console Output: ${env.BUILD_URL}console
+                    Serial Output:
+                    
+                    set Passed
+                    get Passed
+                    toggle Passed
+                    All Test cases of GPIO PASSED!
+                    
+                    Regards,
+                    Jenkins
+                    """
                     )
+
         
                     // Now the revert logic if build failed on main branch
                     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
