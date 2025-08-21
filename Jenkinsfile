@@ -114,12 +114,33 @@ pipeline {
         }
     }
 
-    post {
+        post {
         success {
-            githubNotify context: 'Jenkins CI', status: 'SUCCESS', description: 'Build succeeded'
+            script {
+                githubNotify(
+                    account: 'Deepika123-vandana',     // your GitHub username/org
+                    repo: 'max_78002-new',             // your repository name
+                    credentialsId: 'All_projects',     // Jenkins GitHub token credentials ID
+                    context: 'Jenkins CI',
+                    sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
+                    status: 'SUCCESS',
+                    description: 'Build succeeded'
+                )
+            }
         }
         failure {
-            githubNotify context: 'Jenkins CI', status: 'FAILURE', description: 'Build failed'
+            script {
+                githubNotify(
+                    account: 'Deepika123-vandana',
+                    repo: 'max_78002-new',
+                    credentialsId: 'All_projects',
+                    context: 'Jenkins CI',
+                    sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
+                    status: 'FAILURE',
+                    description: 'Build failed'
+                )
+            }
         }
     }
+
 }
