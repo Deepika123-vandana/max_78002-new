@@ -60,12 +60,12 @@ pipeline {
                         echo runLogContent
 
                         if (runLogContent.contains("All Test cases of GPIO PASSED!")) {
-                            echo "✅ Sanity Check PASSED: GPIO tests succeeded."
+                            echo "Sanity Check PASSED: GPIO tests succeeded."
                         } else {
-                            error "❌ Sanity Check FAILED: GPIO tests did not pass. Check serial log."
+                            error "Sanity Check FAILED: GPIO tests did not pass. Check serial log."
                         }
                     } else {
-                        error "❌ Sanity Check FAILED: Run log file not found."
+                        error "Sanity Check FAILED: Run log file not found."
                     }
                 }
             }
