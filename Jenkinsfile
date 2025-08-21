@@ -82,7 +82,7 @@ pipeline {
                     def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
 
-                    // FIX: normalize build result
+                    // normalize build result
                     def buildStatus = currentBuild.result ?: 'SUCCESS'
                     def subjectColor = buildStatus == 'FAILURE' ? 'red' : 'green'
                     def subjectText = buildStatus == 'FAILURE' ? 'Build Failure' : 'Build Success'
@@ -109,35 +109,17 @@ pipeline {
                         to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
                         from: "sriram.ungatla@vconnecttech.in"
                     )
-
-                    // Revert logic if build failed on main branch
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
-                    if (buildStatus == 'FAILURE' && branch.endsWith("main")) {
-                        echo "Build failed on main branch. Starting revert process..."
-
-                        withCredentials([string(credentialsId: 'All_projects', variable: 'GITHUB_TOKEN')]) {
-                            sh '''
-                                set -e
-                                git config user.name "Deepika123-vandana"
-                                git config user.email "deepika.vandana@vconnectech.in"
-
-                                echo "Ensuring we are on latest main..."
-                                git fetch https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
-                                git checkout main
-                                git reset --hard FETCH_HEAD
-
-                                echo "Reverting last commit..."
-                                git revert --no-edit HEAD
-
-                                echo "Pushing revert to remote..."
-                                git push https://$GITHUB_TOKEN@github.com/Deepika123-vandana/max_78002-new.git main
-                            '''
-                        }
-                    } else {
-                        echo "No revert needed. Build status: ${buildStatus}, Branch: ${branch}"
-                    }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            githubNotify context: 'Jenkins CI', status: 'SUCCESS', description: 'Build succeeded'
+        }
+        failure {
+            githubNotify context: 'Jenkins CI', status: 'FAILURE', description: 'Build failed'
         }
     }
 }
