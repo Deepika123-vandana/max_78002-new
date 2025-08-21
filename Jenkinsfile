@@ -12,27 +12,44 @@ pipeline {
     stages {
         stage('Environment Setup') {
             steps {
+                githubNotify context: 'Environment Setup', status: 'PENDING'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh 'bash -c "source ./env_setup.sh && env"'
+                }
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Environment Setup', status: 'FAILURE'
+                    } else {
+                        githubNotify context: 'Environment Setup', status: 'SUCCESS'
+                    }
                 }
             }
         }
 
         stage('Clean & Build') {
             steps {
+                githubNotify context: 'Build', status: 'PENDING'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh 'make'
+                }
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Build', status: 'FAILURE'
+                    } else {
+                        githubNotify context: 'Build', status: 'SUCCESS'
+                    }
                 }
             }
         }
 
         stage('Boot and Flash') {
             steps {
+                githubNotify context: 'Boot & Flash', status: 'PENDING'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh """
                         mkdir -p ${BUILD_DIR}
                         chmod +x run.sh
-                        //./run.sh
+                        ./run.sh
                     """
                 }
                 sh """
@@ -42,6 +59,13 @@ pipeline {
                         echo "Serial output log not found." > ${RUN_LOG}
                     fi
                 """
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Boot & Flash', status: 'FAILURE'
+                    } else {
+                        githubNotify context: 'Boot & Flash', status: 'SUCCESS'
+                    }
+                }
             }
         }
 
@@ -50,6 +74,7 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
+                githubNotify context: 'Sanity Test - GPIO', status: 'PENDING'
                 script {
                     echo "=== Running GPIO Sanity Test ==="
                     if (fileExists(RUN_LOG)) {
@@ -59,10 +84,13 @@ pipeline {
 
                         if (runLogContent.contains("All Test cases of GPIO PASSED!")) {
                             echo "Sanity Check PASSED: GPIO tests succeeded."
+                            githubNotify context: 'Sanity Test - GPIO', status: 'SUCCESS'
                         } else {
+                            githubNotify context: 'Sanity Test - GPIO', status: 'FAILURE'
                             error "Sanity Check FAILED: GPIO tests did not pass. Check serial log."
                         }
                     } else {
+                        githubNotify context: 'Sanity Test - GPIO', status: 'FAILURE'
                         error "Sanity Check FAILED: Run log file not found."
                     }
                 }
@@ -82,10 +110,13 @@ pipeline {
                     def gitCommitMsg = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
                     def jobNameOnly = env.JOB_NAME.contains('/') ? env.JOB_NAME.tokenize('/')[1] : env.JOB_NAME
 
-                    // FIX: normalize build result
+                    // normalize build result
                     def buildStatus = currentBuild.result ?: 'SUCCESS'
                     def subjectColor = buildStatus == 'FAILURE' ? 'red' : 'green'
                     def subjectText = buildStatus == 'FAILURE' ? 'Build Failure' : 'Build Success'
+
+                    // send final status to GitHub
+                    githubNotify context: 'Overall Pipeline', status: buildStatus
 
                     emailext(
                         subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
@@ -110,7 +141,7 @@ pipeline {
                         from: "sriram.ungatla@vconnecttech.in"
                     )
 
-                    // Revert logic if build failed on main branch
+                    // revert logic if build failed on main branch
                     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
                     if (buildStatus == 'FAILURE' && branch.endsWith("main")) {
                         echo "Build failed on main branch. Starting revert process..."
