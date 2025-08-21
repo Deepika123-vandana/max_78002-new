@@ -114,13 +114,13 @@ pipeline {
         }
     }
 
-       post {
+    post {
         success {
             script {
                 githubNotify(
                     account: 'Deepika123-vandana',     // your GitHub username/org
                     repo: 'max_78002-new',             // your repository name
-                    credentialsId: 'All_projects',     // Jenkins GitHub token credentials ID
+                    credentialsId: 'max_78002',  // ✅ use your real credentials ID
                     context: 'Jenkins CI',
                     sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
                     status: 'SUCCESS',
@@ -133,7 +133,7 @@ pipeline {
                 githubNotify(
                     account: 'Deepika123-vandana',
                     repo: 'max_78002-new',
-                    credentialsId: 'All_projects',
+                    credentialsId: 'max_78002',  // ✅ use your real credentials ID
                     context: 'Jenkins CI',
                     sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
                     status: 'FAILURE',
@@ -142,5 +142,4 @@ pipeline {
             }
         }
     }
-
 }
