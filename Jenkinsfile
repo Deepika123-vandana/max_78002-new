@@ -114,32 +114,5 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            script {
-                githubNotify(
-                    account: 'Deepika123-vandana',     // your GitHub username/org
-                    repo: 'max_78002-new',             // your repository name
-                    credentialsId: 'max_78002',  
-                    context: 'Jenkins CI',
-                    sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
-                    status: 'SUCCESS',
-                    description: 'Build succeeded'
-                )
-            }
-        }
-        failure {
-            script {
-                githubNotify(
-                    account: 'Deepika123-vandana',
-                    repo: 'max_78002-new',
-                    credentialsId: 'max_78002',  
-                    context: 'Jenkins CI',
-                    sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim(),
-                    status: 'FAILURE',
-                    description: 'Build failed'
-                )
-            }
-        }
-    }
+    
 }
