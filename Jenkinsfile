@@ -114,5 +114,13 @@ pipeline {
         }
     }
 
-    
+    // ← HERE IS THE IMPORTANT PART
+    post {
+        success {
+            githubNotify context: 'CI/CD', status: 'SUCCESS', description: 'Build passed!'
+        }
+        failure {
+            githubNotify context: 'CI/CD', status: 'FAILURE', description: 'Build failed!'
+        }
+    }
 }
