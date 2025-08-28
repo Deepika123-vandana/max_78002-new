@@ -116,11 +116,26 @@ pipeline {
 
     // ← HERE IS THE IMPORTANT PART
     post {
-        success {
-            githubNotify context: 'CI/CD', status: 'SUCCESS', description: 'Build passed!'
-        }
-        failure {
-            githubNotify context: 'CI/CD', status: 'FAILURE', description: 'Build failed!'
-        }
+    success {
+        githubNotify(
+            context: 'CI/CD',
+            status: 'SUCCESS',
+            description: 'Build passed!',
+            repo: 'Deepika123-vandana/max_78002-new',
+            credentialsId: 'max_78002',
+            sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+        )
     }
+    failure {
+        githubNotify(
+            context: 'CI/CD',
+            status: 'FAILURE',
+            description: 'Build failed!',
+            repo: 'Deepika123-vandana/max_78002-new',
+            credentialsId: 'max_78002',
+            sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+        )
+    }
+}
+
 }
