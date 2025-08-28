@@ -118,6 +118,7 @@ pipeline {
     post {
     success {
         githubNotify(
+            account: 'Deepika123-vandana',
             context: 'CI/CD',
             status: 'SUCCESS',
             description: 'Build passed!',
@@ -128,6 +129,7 @@ pipeline {
     }
     failure {
         githubNotify(
+            account: 'Deepika123-vandana',
             context: 'CI/CD',
             status: 'FAILURE',
             description: 'Build failed!',
@@ -137,5 +139,6 @@ pipeline {
         )
     }
 }
+
 
 }
