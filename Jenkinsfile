@@ -114,31 +114,7 @@ pipeline {
         }
     }
 
-    // ← HERE IS THE IMPORTANT PART
-    post {
-    success {
-        githubNotify(
-            account: 'Deepika123-vandana',
-            context: 'CI/CD',
-            status: 'SUCCESS',
-            description: 'Build passed!',
-            repo: 'Deepika123-vandana/max_78002-new',
-            credentialsId: 'max_78002',
-            sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-        )
-    }
-    failure {
-        githubNotify(
-            account: 'Deepika123-vandana',
-            context: 'CI/CD',
-            status: 'FAILURE',
-            description: 'Build failed!',
-            repo: 'Deepika123-vandana/max_78002-new',
-            credentialsId: 'max_78002',
-            sha: sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-        )
-    }
-}
+    
 
 
 }
