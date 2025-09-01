@@ -1,5 +1,3 @@
-
-
 set -e
 
 export MAXIM_PATH=/home/admin1/MaximSDK
