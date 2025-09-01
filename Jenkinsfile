@@ -6,7 +6,7 @@ pipeline {
         PATH = "${env.PATH}:${MAXIM_PATH}/Tools/OpenOCD/bin"
         BUILD_DIR = "${WORKSPACE}/build"
         RUN_LOG = "${BUILD_DIR}/run_output.log"
-        TEAM_LEAD_EMAIL = "sriram.ungatla@vconnectech.in"
+        TEAM_LEAD_EMAIL = "deepika.vandana@vconnectech.in, sriram.ungatla@vconnectech.in"
     }
 
     stages {
