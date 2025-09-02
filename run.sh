@@ -30,10 +30,10 @@ sleep 10
 # Kill capture after 10s
 kill $CAPTURE_PID 2>/dev/null || true
 
-echo "===== Serial capture complete ====="
-echo "===== Output Start ====="
+echo "=== Serial capture complete ==="
+echo "=== Output Start ==="
 cat $LOG_FILE
-echo "===== Output End ====="
+echo "=== Output End ==="
 
 # Check for error pattern in serial output
 if grep -q "FAILED" "$LOG_FILE"; then
