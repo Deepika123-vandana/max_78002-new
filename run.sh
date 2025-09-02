@@ -10,7 +10,7 @@ LOG_FILE="serial_output.log"
 # Ensure log file is fresh
 > $LOG_FILE
 
-echo "=== Configuring serial port ==="
+echo "===== Configuring serial port ==="
 stty -F $SERIAL_PORT 115200 raw -echo
 
 echo "=== Starting background serial log capture ==="
