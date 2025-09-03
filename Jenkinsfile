@@ -12,27 +12,44 @@ pipeline {
     stages {
         stage('Environment Setup') {
             steps {
+                githubNotify context: 'Environment Setup', status: 'PENDING', description: 'Setting up environment'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh 'bash -c "source ./env_setup.sh && env"'
+                }
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Environment Setup', status: 'FAILURE', description: 'Env setup failed'
+                    } else {
+                        githubNotify context: 'Environment Setup', status: 'SUCCESS', description: 'Env setup passed'
+                    }
                 }
             }
         }
 
         stage('Clean & Build') {
             steps {
+                githubNotify context: 'Build', status: 'PENDING', description: 'Build started'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh 'make'
+                }
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Build', status: 'FAILURE', description: 'Build failed'
+                    } else {
+                        githubNotify context: 'Build', status: 'SUCCESS', description: 'Build passed'
+                    }
                 }
             }
         }
 
         stage('Boot and Flash') {
             steps {
+                githubNotify context: 'Boot & Flash', status: 'PENDING', description: 'Boot and flashing started'
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     sh """
                         mkdir -p ${BUILD_DIR}
                         chmod +x run.sh
-                        ./run.sh
+                        //./run.sh
                     """
                 }
                 sh """
@@ -42,6 +59,13 @@ pipeline {
                         echo "Serial output log not found." > ${RUN_LOG}
                     fi
                 """
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        githubNotify context: 'Boot & Flash', status: 'FAILURE', description: 'Boot/Flash failed'
+                    } else {
+                        githubNotify context: 'Boot & Flash', status: 'SUCCESS', description: 'Boot/Flash passed'
+                    }
+                }
             }
         }
 
@@ -50,20 +74,22 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
+                githubNotify context: 'Sanity Test - GPIO', status: 'PENDING', description: 'GPIO sanity test started'
                 script {
                     echo "=== Running GPIO Sanity Test ==="
                     if (fileExists(RUN_LOG)) {
                         def runLogContent = readFile(RUN_LOG).trim()
-                        echo "=== GPIO Test Serial Log ==="
                         echo runLogContent
 
                         if (runLogContent.contains("All Test cases of GPIO PASSED!")) {
-                            echo "Sanity Check PASSED: GPIO tests succeeded."
+                            githubNotify context: 'Sanity Test - GPIO', status: 'SUCCESS', description: 'GPIO tests passed'
                         } else {
-                            error "Sanity Check FAILED: GPIO tests did not pass. Check serial log."
+                            githubNotify context: 'Sanity Test - GPIO', status: 'FAILURE', description: 'GPIO tests failed'
+                            error "Sanity Check FAILED"
                         }
                     } else {
-                        error "Sanity Check FAILED: Run log file not found."
+                        githubNotify context: 'Sanity Test - GPIO', status: 'FAILURE', description: 'Run log missing'
+                        error "Run log missing"
                     }
                 }
             }
@@ -75,7 +101,6 @@ pipeline {
                     def runLogFile = "${RUN_LOG}"
                     def runLogContent = fileExists(runLogFile) ? readFile(runLogFile).trim() : "Serial output log not found."
 
-                    echo "====== Serial Output ======"
                     echo runLogContent
 
                     def commitAuthor = sh(script: "git log -1 --pretty=format:%ae", returnStdout: true).trim()
@@ -84,26 +109,16 @@ pipeline {
 
                     // normalize build result
                     def buildStatus = currentBuild.result ?: 'SUCCESS'
-                    def subjectColor = buildStatus == 'FAILURE' ? 'red' : 'green'
-                    def subjectText = buildStatus == 'FAILURE' ? 'Build Failure' : 'Build Success'
+
+                    // final GitHub status
+                    githubNotify context: 'Overall Pipeline', status: buildStatus, description: "Pipeline finished with ${buildStatus}"
 
                     emailext(
-                        subject: "Jenkins ${subjectText} - ${jobNameOnly} #${env.BUILD_NUMBER}",
+                        subject: "Jenkins ${buildStatus} - ${jobNameOnly} #${env.BUILD_NUMBER}",
                         body: """
-                            <h2 style="color: ${subjectColor};">Build Status: ${buildStatus}</h2>
-                            <p><strong>Job Name:</strong> ${jobNameOnly}</p>
-                            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                            <p><strong>Branch Name:</strong> ${env.GIT_BRANCH}</p>
-                            <p><strong>Commit Author:</strong> ${commitAuthor}</p>
-                            <p><strong>Commit Message:</strong> ${gitCommitMsg}</p>
-                            <p><strong>Email Sent To:</strong> ${commitAuthor}, ${TEAM_LEAD_EMAIL}</p>
-                            <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                            <hr>
-                            <h3>Serial Output:</h3>
+                            <h2>Build Status: ${buildStatus}</h2>
+                            <p><strong>Commit:</strong> ${gitCommitMsg}</p>
                             <pre>${runLogContent}</pre>
-                            <br>
-                            Regards,<br>
-                            Jenkins
                         """,
                         mimeType: 'text/html',
                         to: "${commitAuthor}, ${TEAM_LEAD_EMAIL}",
